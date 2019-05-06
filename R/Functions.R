@@ -1,4 +1,5 @@
 
+
 #### Generate Operating Models ####
 MakeOM <- function(omnum, nsim=100, interval=4, nyears=50, proyears=30, obs_mod=Precise_Unbiased) {
   dat <- readxl::read_xlsx("OMs/OMs.xlsx")[omnum,]
@@ -8,6 +9,8 @@ MakeOM <- function(omnum, nsim=100, interval=4, nyears=50, proyears=30, obs_mod=
   OM@Species <- dat$Species
   OM <- tinyErr(OM, silent=TRUE)
   OM <- Replace(OM, obs_mod)
+  
+  OM@beta <- c(0.99, 1.01)
   OM@Name <- dat$Name
   
   OM@AC <- c(0,0)

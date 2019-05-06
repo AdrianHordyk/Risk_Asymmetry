@@ -4,8 +4,6 @@ library(DLMtool); library(dplyr); library(ggplot2)
 library(MSEtool); library(flextable); library(forcats);
 library(grid); library(gridExtra)
 
-
-
 # Directory names
 OMdir <- "OMs"
 Resultsdir <- "Results"
