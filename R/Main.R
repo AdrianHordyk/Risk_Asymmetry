@@ -1,8 +1,5 @@
 
-# devtools::install_github('tcarruth/MSEtool', ref = "new_dome")
-
 source("R/control.r")
-library(cowplot)
 
 Y1 <- 4 
 Y2 <- 30

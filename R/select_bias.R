@@ -1,89 +1,90 @@
 
+devtools::install_github('tcarruth/MSEtool', ref = "new_dome")
 
-args <- commandArgs(trailingOnly = TRUE)
-if (length(args)>0) {
-  omnum <- as.numeric(args[1])  
-  Dep <- as.numeric(args[2])  
-} else {
-  omnum <- 1
-  Dep <- 0.5
-}
 
 source("R/control.R")
 
 Vmaxage <- 0.65
 AssumedVmax <- Vmaxage * (1 + seq(-0.5, 0.5, length.out=9))
 
-
-# Make figure 
-
-OM <- MakeOM(omnum, nsim) # load OM 
-
-om <- OM 
-om@nsim <- 2
-Hist <- runMSE(om, Hist=TRUE)
-afs <- min(which(Hist@AtAge$Select[1,,1] >=0.99))
-as5 <- min(which(Hist@AtAge$Select[1,,1] >=0.05))
-
-srs <- (om@maxage - afs) / ((-log(Vmaxage,2))^0.5) # selectivity parameters are constant for all years
-srs[!is.finite(srs)] <- Inf
-sls <- (afs - as5) /((-log(0.05,2))^0.5)
-selage <- DLMtool:::getsel(lens=1:om@maxage, lfs=afs, sls=sls, srs=srs)
-
-V <- array(selage, dim=c(om@maxage, om@nsim, om@nyears+om@proyears)) 
-V <- aperm(V, c(2,1,3))
-OM@cpars$V <- V
-
-
-# Create MPs 
-for (x in seq_along(AssumedVmax)) {
+for (omnum in 1:4) {
+  message("OM:", omnum)
+  OM <- MakeOM(omnum, nsim) # load OM 
+  om <- OM 
+  om@nsim <- 2
+  Hist <- runMSE(om, Hist=TRUE)
+  afs <- min(which(Hist@AtAge$Select[1,,1] >=0.99))
+  as5 <- min(which(Hist@AtAge$Select[1,,1] >=0.05))
   
-  name <- paste('SCA_MP', AssumedVmax[x], sep="_")
-  if (AssumedVmax[x]<1) {
-    temp <- make_MP(SCA, HCR_MSY, fix_h=TRUE, fix_tau=TRUE, 
-                    vulnerability = "dome", Vmaxage=AssumedVmax[x])
-  } else {
-    temp <- make_MP(SCA, HCR_MSY, fix_h=TRUE, fix_tau=TRUE, 
-                    vulnerability = "logistic")
+  srs <- (om@maxage - afs) / ((-log(Vmaxage,2))^0.5) # selectivity parameters are constant for all years
+  srs[!is.finite(srs)] <- Inf
+  sls <- (afs - as5) /((-log(0.05,2))^0.5)
+  selage <- DLMtool:::getsel(lens=1:om@maxage, lfs=afs, sls=sls, srs=srs)
+  
+  V <- array(selage, dim=c(om@maxage, om@nsim, om@nyears+om@proyears)) 
+  V <- aperm(V, c(2,1,3))
+  OM@cpars$V <- V
+  
+  # Create MPs 
+  for (x in seq_along(AssumedVmax)) {
+    
+    name <- paste('SCA_MP', AssumedVmax[x], sep="_")
+    if (AssumedVmax[x]<1) {
+      temp <- make_MP(SCA, HCR_MSY, fix_h=TRUE, fix_tau=TRUE, 
+                      vulnerability = "dome", Vmaxage=AssumedVmax[x])
+    } else {
+      temp <- make_MP(SCA, HCR_MSY, fix_h=TRUE, fix_tau=TRUE, 
+                      vulnerability = "logistic")
+    }
+    assign(name, temp)
   }
-  assign(name, temp)
+  
+  mps <- avail('MP')
+  testMPs <- mps[grepl('SCA_MP_', mps)]
+  
+  # Run historical 
+  message("Calculate depletion")
+  Hist <- runMSE(OM, Hist=TRUE, silent=TRUE)
+  dep <- round(Hist@Ref$SSBMSY_SSB0[1],3) * Dep
+  OM@D <- rep(dep, 2)
+  
+  runOM <- OM
+  nsim <- runOM@nsim
+  
+  MSE <- runMSE(runOM, MPs=testMPs, parallel = TRUE)
+  
+  omdat <- MSE@OM
+  omdat$sim <- 1:MSE@nsim
+  obsdat <-MSE@Obs
+  obsdat$sim <- 1:MSE@nsim
+  
+  output <- data.frame(B_BMSY=as.vector(unlist(MSE@B_BMSY)),
+                       F_FMSY=as.vector(unlist(MSE@F_FMSY)),
+                       Catch=as.vector(unlist(MSE@C)),
+                       TAC=as.vector(unlist(MSE@TAC)),
+                       sim=1:MSE@nsim, Years=rep(1:MSE@proyears, each=MSE@nMPs*MSE@nsim),
+                       MP=rep(MSE@MPs, each=MSE@nsim))
+  
+  outDF <- left_join(output, omdat, by='sim')
+  outDF <- left_join(outDF, obsdat, by='sim')
+  outDF$dep <- dep
+  outDF$Name <- MSE@Name
+  
+  DF <- outDF
+  Name <- gsub(" ", "_", OM@Name)
+  flname <- paste0("select_", Name, "_", Dep, ".rdata")
+  saveRDS(DF, file.path(Resultsdir, flname))
 }
 
-mps <- avail('MP')
-testMPs <- mps[grepl('SCA_MP_', mps)]
 
-# Run historical 
-message("Calculate depletion")
-Hist <- runMSE(OM, Hist=TRUE, silent=TRUE)
-dep <- round(Hist@Ref$SSBMSY_SSB0[1],3) * Dep
-OM@D <- rep(dep, 2)
 
-runOM <- OM
-nsim <- runOM@nsim
 
-MSE <- runMSE(runOM, MPs=testMPs, parallel = TRUE)
 
-omdat <- MSE@OM
-omdat$sim <- 1:MSE@nsim
-obsdat <-MSE@Obs
-obsdat$sim <- 1:MSE@nsim
 
-output <- data.frame(B_BMSY=as.vector(unlist(MSE@B_BMSY)),
-                     F_FMSY=as.vector(unlist(MSE@F_FMSY)),
-                     Catch=as.vector(unlist(MSE@C)),
-                     TAC=as.vector(unlist(MSE@TAC)),
-                     sim=1:MSE@nsim, Years=rep(1:MSE@proyears, each=MSE@nMPs*MSE@nsim),
-                     MP=rep(MSE@MPs, each=MSE@nsim))
 
-outDF <- left_join(output, omdat, by='sim')
-outDF <- left_join(outDF, obsdat, by='sim')
-outDF$dep <- dep
-outDF$Name <- MSE@Name
 
-DF <- outDF
-Name <- gsub(" ", "_", OM@Name)
-flname <- paste0("select_", Name, "_", Dep, ".rdata")
-saveRDS(DF, file.path(Resultsdir, flname))
+
+
 
 # 
 # 

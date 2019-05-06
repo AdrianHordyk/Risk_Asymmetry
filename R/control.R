@@ -10,7 +10,7 @@ loadPackages <- function(pcks=NUL) {
 }
 
 pcks <- c('DLMtool', 'MSEtool', 'dplyr', 'ggplot2', 
-          'flextable', 'forcats', 'grid', 'gridExtra')
+          'flextable', 'forcats', 'grid', 'gridExtra', 'cowplot')
 
 # Load libraries
 loadPackages(pcks)
