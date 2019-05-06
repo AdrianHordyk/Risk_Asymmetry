@@ -3,6 +3,7 @@ devtools::install_github('tcarruth/MSEtool', ref = "fix_dome")
 
 
 source("R/control.R")
+Dep <- 0.5
 
 Vmaxage <- 0.65
 AssumedVmax <- Vmaxage * (1 + seq(-0.5, 0.5, length.out=9))
