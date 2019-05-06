@@ -1,5 +1,5 @@
 
-devtools::install_github('tcarruth/MSEtool', ref = "new_dome")
+devtools::install_github('tcarruth/MSEtool', ref = "fix_dome")
 
 
 source("R/control.R")
