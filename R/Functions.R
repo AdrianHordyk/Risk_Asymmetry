@@ -489,8 +489,173 @@ MakePlots <- function(OM, msys, msys_2, msys_3, size=2, lsize=1.25) {
 }
 
 
+makeMbiasDF <- function(Sp, Dep=0.5) {
+  Data <- readRDS(file.path("Results", paste0(paste("Mbias", Sp, Dep, sep="_"), '.rdata')))
+  Data <- Data %>% mutate(D=((B_BMSY * SSBMSY) / SSB0), RelC=Catch/RefY)
+  Vars <- Data$Mbias %>% unique()
+  List <- list(); df <- NA
+  for (x in seq_along(Vars)) {
+    rm(df)
+    df <- Data %>% dplyr::filter(Mbias == Vars[x]) %>% select(sim, D, B_BMSY, RelC, Years, Mbias)
+    df$bias <- round(log(Vars[x]),3)
+    df$abs_bias <- round(abs(df$bias), 3)
+    df$Bias <- ifelse(log(Vars[x])<0, "Negative", "Positive")
+    if (log(Vars[x])==0) {
+      df2 <- df
+      df2$Bias <- "Negative"
+      df$Bias <- "Positive"
+      df <- bind_rows(df2, df)
+    }
+    List[[x]] <- df
+  }
+  DF <- do.call("rbind", List)
+  DF$Species <- Sp
+  DF$relD <- DF$D/DF$D[DF$abs_bias==0]
+  DF$stRelC <- DF$RelC/DF$RelC[DF$abs_bias==0]
+  DF$BMSY <- Data$SSBMSY_SSB0 %>% unique()
+  DF
+}
+
+makehbiasDF <- function(Sp, Dep=0.5) {
+  Data <- readRDS(file.path("Results", paste0(paste("Hbias", Sp, Dep, sep="_"), '.rdata')))
+  Data <- Data %>% mutate(D=((B_BMSY * SSBMSY) / SSB0), RelC=Catch/RefY)
+  
+  Vars <- Data$var %>% unique()
+  
+  List <- list(); df <- NA
+  for (x in seq_along(Vars)) {
+    rm(df)
+    df <- Data %>% dplyr::filter(var == Vars[x]) %>% select(sim, D, B_BMSY, RelC, Years, var)
+    
+    df$bias <- h2CR(Data$hs[1] + Vars[x])/h2CR(unique(Data$hs)) -1 
+    df$abs_bias <- round(abs(df$bias), 3)
+    df$Bias <- ifelse(df$bias[1]<0, "Negative", "Positive")
+    if (df$bias[1]==0) {
+      df2 <- df
+      df2$Bias <- "Negative"
+      df$Bias <- "Positive"
+      df <- bind_rows(df2, df)
+    }
+    List[[x]] <- df
+  }
+  DF <- do.call("rbind", List)
+  DF$Species <- Sp
+  DF$relD <- DF$D/DF$D[DF$abs_bias==0]
+  DF$stRelC <- DF$RelC/DF$RelC[DF$abs_bias==0]
+  DF
+}
+
+makeageMsDF <- function(Sp, Dep=0.5) {
+  Data <- readRDS(file.path("Results", paste0(paste("AgeMbias", Sp, Dep, sep="_"), '.rdata')))
+  Data <- Data %>% mutate(D=((B_BMSY * SSBMSY) / SSB0), RelC=Catch/RefY)
+  Vars <- Data$var %>% unique()
+  List <- list(); df <- NA
+  for (x in seq_along(Vars)) {
+    rm(df)
+    df <- Data %>% dplyr::filter(var == Vars[x]) %>% select(sim, D, B_BMSY, RelC, Years, var)
+    
+    df$bias <- df$var - 1 
+    df$abs_bias <- round(abs(df$bias), 3)
+    df$Bias <- ifelse(df$bias[1]<0, "Negative", "Positive")
+    if (df$bias[1]==0) {
+      df2 <- df
+      df2$Bias <- "Negative"
+      df$Bias <- "Positive"
+      df <- bind_rows(df2, df)
+    }
+    List[[x]] <- df
+  }
+  DF <- do.call("rbind", List)
+  DF$Species <- Sp
+  DF$relD <- DF$D/DF$D[DF$abs_bias==0]
+  DF$stRelC <- DF$RelC/DF$RelC[DF$abs_bias==0]
+  DF
+}
 
 
+makebetasDF <- function(Sp, Dep=0.5) {
+  Data <- readRDS(file.path("Results", paste0(paste("betabias", Sp, Dep, sep="_"), '.rdata')))
+  Data <- Data %>% mutate(D=((B_BMSY * SSBMSY) / SSB0), RelC=Catch/RefY)
+  Vars <- Data$var %>% unique()
+  List <- list(); df <- NA
+  for (x in seq_along(Vars)) {
+    rm(df)
+    df <- Data %>% dplyr::filter(var == Vars[x]) %>% select(sim, D, B_BMSY, RelC, Years, var)
+    
+    df$bias <- log(df$var)
+    df$abs_bias <- round(abs(df$bias), 3)
+    df$Bias <- ifelse(df$bias[1]<0, "Negative", "Positive")
+    if (df$bias[1]==0) {
+      df2 <- df
+      df2$Bias <- "Negative"
+      df$Bias <- "Positive"
+      df <- bind_rows(df2, df)
+    }
+    List[[x]] <- df
+  }
+  DF <- do.call("rbind", List)
+  DF$Species <- Sp
+  DF$relD <- DF$D/DF$D[DF$abs_bias==0]
+  DF$stRelC <- DF$RelC/DF$RelC[DF$abs_bias==0]
+  DF
+}
+
+makeCatchDF <- function(Sp, Dep=0.5) {
+  Data <- readRDS(file.path("Results", paste0(paste("Cbias", Sp, Dep, sep="_"), '.rdata')))
+  Data <- Data %>% mutate(D=((B_BMSY * SSBMSY) / SSB0), RelC=Catch/RefY)
+  Vars <- Data$var %>% unique()
+  List <- list(); df <- NA
+  for (x in seq_along(Vars)) {
+    rm(df)
+    df <- Data %>% dplyr::filter(var == Vars[x]) %>% select(sim, D, B_BMSY, RelC, Years, var)
+    
+    df$bias <- 1-(df$var)
+    df$abs_bias <- round(abs(df$bias), 3)
+    df$Bias <- ifelse(df$bias[1]<0, "Negative", "Positive")
+    if (df$bias[1]==0) {
+      df2 <- df
+      df2$Bias <- "Negative"
+      df$Bias <- "Positive"
+      df <- bind_rows(df2, df)
+    }
+    List[[x]] <- df
+  }
+  DF <- do.call("rbind", List)
+  DF$Species <- Sp
+  DF$relD <- DF$D/DF$D[DF$abs_bias==0]
+  DF$stRelC <- DF$RelC/DF$RelC[DF$abs_bias==0]
+  DF
+}
+
+makeSeletDF <- function(Sp, Dep=0.5) {
+  Data <- readRDS(file.path("Results", paste0(paste("select", Sp, Dep, sep="_"), '.rdata')))
+  Data <- Data %>% mutate(D=((B_BMSY * SSBMSY) / SSB0), RelC=Catch/RefY)
+  Data$MP <- as.character(Data$MP)
+  Vars <- Data$MP %>% unique() 
+  List <- list(); df <- NA
+  for (x in seq_along(Vars)) {
+    rm(df)
+    df <- Data %>% dplyr::filter(MP == Vars[x]) %>% select(sim, D, B_BMSY, RelC, Years, MP)
+    val <- as.numeric(unlist(regmatches(Vars[x],
+                                        gregexpr("[[:digit:]]+\\.*[[:digit:]]*",
+                                                 Vars[x]))))
+    df$bias <- val / 0.65 - 1
+    df$abs_bias <- round(abs(df$bias), 3)
+    df$Bias <- ifelse(df$bias[1]<0, "Negative", "Positive")
+    if (df$bias[1]==0) {
+      df2 <- df
+      df2$Bias <- "Negative"
+      df$Bias <- "Positive"
+      df <- bind_rows(df2, df)
+    }
+    List[[x]] <- df
+  }
+  DF <- do.call("rbind", List)
+  DF$Species <- Sp
+  DF$relD <- DF$D/DF$D[DF$abs_bias==0]
+  DF$stRelC <- DF$RelC/DF$RelC[DF$abs_bias==0]
+  DF
+}
 
 
 
