@@ -329,7 +329,7 @@ for (x in seq_along(funs)) {
               Catch=mean(stRelC[bias==bias[2]]/stRelC[bias==bias[1]])) %>%
     filter(Years %in% c(Y1, Y2)) %>% tidyr::gather("key", "value", 5:6)
   
-  Ylimits <- dat %>% group_by(Years, Species, key, abs_bias) %>%
+  Ylimits <- dat %>% group_by(Years, Species, key) %>%
     summarize(upper=quantile(value, 0.95)) %>% ungroup() %>%
     group_by(key) %>%
     summarize(max=max(upper))
