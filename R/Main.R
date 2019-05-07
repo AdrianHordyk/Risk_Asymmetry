@@ -222,6 +222,15 @@ df2$med[df2$med < minVal] <- minVal
 # --- Catch ---
 df3 <- df2 %>% filter(key=='Catch')
 
+tt <- df3 %>% filter(Species == "Silver warehou", Analysis == "A50", Years==4)
+1 - tt$med
+
+df3 %>% filter(Analysis == "A50", Years==30)
+
+df3 %>% filter(Species == "Pacific ocean perch", Analysis == "Index", Years==4)
+
+df3 %>% filter(Analysis == "Index", Years==30)
+
 df3$Years <- factor(df3$Years, ordered = TRUE)
 Pout <- ggplot(df3, aes(x=abs_bias, y=med, color=Species)) + 
   geom_line() + geom_point() +
@@ -264,6 +273,12 @@ Pout <- ggplot(df3, aes(x=abs_bias, y=med, color=Species)) +
 Pout <- addLabels(Pout, labelR="Year", labelT="")
 ggsave("Figures/Figure6.png", Pout, dpi=600, width=180, height=120, units="mm")
 
+
+df3 %>% filter(Species == "Pacific ocean perch", Analysis == "M", Years==4)
+
+df3 %>% filter(Species == "Pacific hake", Analysis == "CR", Years==30)
+
+df3 %>% filter( Analysis == "CR", abs_bias==0.5)
 
 
 # ---- Supp Figures ----
