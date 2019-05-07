@@ -65,6 +65,12 @@ Pout <- cowplot::plot_grid(Plots, leg, rel_widths = c(2, 0.2))
 
 ggsave("Figures/Figure3.png", Pout, units='mm', width=180, height=170, dpi=600)
 
+dat %>% filter(key=="Catch", bias>0, Years==30)
+dat %>% filter(key=="Catch", bias<0, Years==30)
+
+dat %>% filter(key!="Catch", bias>0, Years==30)
+dat %>% filter(key!="Catch", bias<0, Years==30)
+
 # ---- Figure 4 -----
 
 dat <- DF %>% filter(Years %in% c(Y1, Y2)) %>% 
@@ -296,7 +302,7 @@ for (x in seq_along(funs)) {
     tidyr::gather("key", "value", 4:5)
   dat$bias <- round(dat$bias, 2)
   
-  Ylimits <- dat %>% group_by(Years, Species, key) %>%
+  Ylimits <- dat %>% group_by(Years, Species, key, bias) %>%
     summarize(upper=quantile(value, 0.95)) %>% ungroup() %>%
     summarize(max=max(upper))
 
@@ -329,7 +335,7 @@ for (x in seq_along(funs)) {
               Catch=mean(stRelC[bias==bias[2]]/stRelC[bias==bias[1]])) %>%
     filter(Years %in% c(Y1, Y2)) %>% tidyr::gather("key", "value", 5:6)
   
-  Ylimits <- dat %>% group_by(Years, Species, key) %>%
+  Ylimits <- dat %>% group_by(Years, Species, key, abs_bias) %>%
     summarize(upper=quantile(value, 0.95)) %>% ungroup() %>%
     group_by(key) %>%
     summarize(max=max(upper))
@@ -348,7 +354,7 @@ for (x in seq_along(funs)) {
     geom_hline(yintercept = 4, linetype=5, col="darkgray") +
     geom_boxplot(outlier.shape = NA) + 
     scale_y_continuous(expand=c(0,0),labels=scaleFUN) +
-    coord_cartesian(ylim=c(0, Ylimits$max[1])) +
+    coord_cartesian(ylim=c(0, min(Ylimits$max[1],10))) +
     theme_classic() + theme(strip.background = element_blank()) +
     theme(axis.title = element_text(size=text.size),
           axis.text = element_text(size=text.size-1),
@@ -371,7 +377,7 @@ for (x in seq_along(funs)) {
     geom_hline(yintercept = 4, linetype=5, col="darkgray") +
     geom_boxplot(outlier.shape = NA) + 
     scale_y_continuous(expand=c(0,0),labels=scaleFUN) +
-    coord_cartesian(ylim=c(0, Ylimits$max[2])) +
+    coord_cartesian(ylim=c(0, min(Ylimits$max[2],10))) +
     theme_classic() + theme(strip.background = element_blank()) +
     theme(axis.title = element_text(size=text.size),
           axis.text = element_text(size=text.size-1),
